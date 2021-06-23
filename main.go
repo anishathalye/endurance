@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/keybase/go-keybase-chat-bot/kbchat/types/chat1"
-	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/oauth2"
 
 	"github.com/dchest/safefile"
@@ -50,6 +49,7 @@ type Server struct {
 
 type Config struct {
 	Hostname        string
+	Port            string
 	KBAdminUsername string
 
 	StravaClientID     string
@@ -155,28 +155,15 @@ func main() {
 	mux.HandleFunc("/strava/user", s.stravaUserHandler)
 	mux.HandleFunc("/strava/webhook", s.stravaWebhookHandler)
 
-	certManager := &autocert.Manager{
-		Cache:      autocert.DirCache(filepath.Join(*persistDir, "ssl_keys")),
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(conf.Hostname),
-	}
 	httpErrorsFile := logFile("http_errors.log")
 	defer httpErrorsFile.Close()
 	httpServer := &http.Server{
-		Addr:      ":https",
-		Handler:   mux,
-		TLSConfig: certManager.TLSConfig(),
-		ErrorLog:  log.New(httpErrorsFile, "", log.LstdFlags),
+		Addr:     ":" + conf.Port,
+		Handler:  mux,
+		ErrorLog: log.New(httpErrorsFile, "", log.LstdFlags),
 	}
 	go func() {
-		err := httpServer.ListenAndServeTLS("", "")
-		log.Fatal(err)
-	}()
-
-	go func() {
-		err := http.ListenAndServe(":http", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
-		}))
+		err := httpServer.ListenAndServe()
 		log.Fatal(err)
 	}()
 
