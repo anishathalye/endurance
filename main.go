@@ -269,7 +269,15 @@ func logFile(name string) *os.File {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(`<html><a href="https://github.com/davidlazar/endurance">Endurance</a> Bot!</html>`))
+	w.Write([]byte(`
+<html>
+  <h1><a href="https://github.com/davidlazar/endurance">Endurance</a> Bot!</h1>
+  <ul>
+    <li><a href="/strava/follow">Connect to Strava</a></li>
+    <li><a href="/strava/user">User settings</a></li>
+  </ul>
+</html>
+`))
 }
 
 func (s *Server) stravaFollowHandler(w http.ResponseWriter, r *http.Request) {
